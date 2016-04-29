@@ -5,24 +5,30 @@
 #include <time.h>
 
 
+#define RND          (rand()/(RAND_MAX + 1.0))
+#define PI           (3.14159265359)
 
-/* 参数 */
-#define RND         (rand()/RAND_MAX+1.0)
-#define X_DIM       3          /* 空间维数, 即问题的解得个数 */
-#define maxiter     5000        /* 置迭代次数 */
+/* 问题相关 */
+#define X_DIM       10
+#define gsonum      100           /* 种群大小 */
 
 
 
 
-const int gsonum = 100;            /* 种群大小 */
-const double initl = 5.0;          /* 初始萤光素值 */
-const double rho = 0.4;            /* 萤光素挥发系数 */
-const double gamma = 0.6;          /* 适应度影响因子 */
-const double beta = 0.08;          /* 邻域变化率 */
-const double s = 0.8;              /* 移动步长 */
-const int nt = 5;                  /* 邻域阀值 */
-const double initr = 40;          /* 初始决策半径 */
-const double rs = 65;             /* 最大决策半径 */
+
+double domx[2] = { -100, 100 };
+double get_y( double x[X_DIM] )
+{
+    register int i;
+    register double sum;
+
+    sum = 0.0;
+    for ( i = 0; i < X_DIM; i ++ )
+    {
+        sum += x[i] * x[i];
+    }
+    return sum;
+}
 
 
 
@@ -36,46 +42,25 @@ typedef struct tag_gso
 } gso_t, *gso_ptr;
 
 
+/* 参数 */
+const double initl = 5.0;          /* 初始萤光素值 */
+const double rho = 0.4;            /* 萤光素挥发系数 */
+const double alpha = 0.6;          /* 适应度影响因子 */
+const double beta = 0.08;          /* 邻域变化率 */
+const double s = 0.8;              /* 移动步长 */
+const int nt = 5;                  /* 邻域阀值 */
+const double initr = 400;          /* 初始决策半径 */
+const double rs = 650;             /* 最大决策半径 */
 
-/* 公共数据定义 */
+
+/* 数据定义 */
 gso_t gsos[gsonum];                /* 种群 */
 gso_t optimum;                     /* 最优个体 */
 double gsodist[gsonum][gsonum];    /* 距离矩阵 */
 int tabu[gsonum];                  /* 禁忌表 */
 int ninum[gsonum];                 /* 邻域集 */
-double domx[2] = { -100, 100 };    /* 域的大小 */
+int maxiter;                       /* 最大迭代次数 */
 
-
-
-
-
-double get_y_from_target( double x[X_DIM], double target[X_DIM] )
-{
-    register int i;
-    register double sum;
-
-    sum = 0.0;
-    for ( i = 0; i < X_DIM; i ++ )
-    {
-        sum += (x[i]-target[i]) * (x[i]-target[i]);
-    }
-    return sum;
-}
-
-
-
-double get_y( double x[X_DIM] )
-{
-    register int i;
-    register double sum;
-
-    sum = 0.0;
-    for ( i = 0; i < X_DIM; i ++ )
-    {
-        sum += x[i] * x[i];
-    }
-    return sum;
-}
 
 
 
@@ -156,7 +141,6 @@ void move_gso( int idx1, int idx2 )
 
 int main()
 {
-
     int i, j, k;
     int iter;
     double sum, partsum[gsonum + 1];
@@ -171,7 +155,8 @@ int main()
     /* 初始化种群 */
     init_gsos();
 
-
+    /* 置迭代次数 */
+    maxiter = 5000;
 
 
     /* 迭代 */
@@ -180,8 +165,7 @@ int main()
         /* 更新荧光素 */
         for ( i = 0; i < gsonum; i ++ )
         {
-            // 荧光素与距离反相关
-            gsos[i].l = ( 1 - rho ) * gsos[i].l + gamma / gsos[i].y;
+            gsos[i].l = ( 1 - rho ) * gsos[i].l + alpha / gsos[i].y;
         }
 
         /* 清ni集计数 */
