@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <mpi.h>
 
 
 
@@ -56,6 +57,7 @@ double get_y_from_target( double x[X_DIM], double target[X_DIM] )
     register double sum;
 
     sum = 0.0;
+    #pragma omp parallel for reduction(+:sum)
     for ( i = 0; i < X_DIM; i ++ )
     {
         sum += (x[i]-target[i]) * (x[i]-target[i]);
@@ -71,6 +73,7 @@ double get_y( double x[X_DIM] )
     register double sum;
 
     sum = 0.0;
+    #pragma omp parallel for reduction(+:sum)
     for ( i = 0; i < X_DIM; i ++ )
     {
         sum += x[i] * x[i];
@@ -101,6 +104,7 @@ void init_single_gso( int idx )
 {
     register int i;
 
+    #pragma omp parallel for
     for ( i = 0; i < X_DIM; i ++ )
     {
         gsos[idx].x[i] = domx[0] + ( domx[1] - domx[0] ) * RND;
@@ -121,6 +125,7 @@ void init_gsos()
 {
     register int i;
 
+    #pragma omp parallel for
     for ( i = 0; i < gsonum; i ++ )
     {
         init_single_gso( i );
@@ -132,6 +137,7 @@ void move_gso( int idx1, int idx2 )
 {
     register int i;
 
+    #pragma omp parallel for
     for ( i = 0; i < X_DIM; i ++ )
     {
         gsos[idx1].x[i] += s * ( gsos[idx2].x[i] - gsos[idx1].x[i] ) / gsodist[idx1][idx2];
@@ -158,10 +164,16 @@ void move_gso( int idx1, int idx2 )
 int main()
 {
 
+    int my_rank,comm_sz;
+    MPI_Init(NULL,NULL);
+    MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+    MPI_Comm_size(MPI_COMM_WORLD,&comm_sz);
+
     int i, j, k;
     int iter;
     double sum, partsum[gsonum + 1];
     double rnd;
+    double best;
 
     /* 初始化随机数发生器 */
     srand( ( unsigned int )time( NULL ) );
@@ -173,10 +185,11 @@ int main()
     init_gsos();
 
 
+    MPI_Barrier(MPI_COMM_WORLD);
 
 
     /* 迭代 */
-    for ( iter = 0; iter < maxiter; iter ++ )
+    for ( iter = 0; iter < maxiter/comm_sz; iter ++ )
     {
         /* 更新荧光素 */
         for ( i = 0; i < gsonum; i ++ )
@@ -257,6 +270,11 @@ int main()
 
         fprintf( stdout, "best=%.15f\n", optimum.y );
     }
+
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Reduce(&optimum.y,&best,1,MPI_DOUBLE,MPI_MIN,0,MPI_COMM_WORLD);
+    fprintf( stdout, "best=%.15f\n", best );
 
     return 0;
 }
