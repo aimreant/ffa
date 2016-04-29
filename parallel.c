@@ -7,19 +7,22 @@
 
 
 
+#define RND          (rand()/(RAND_MAX + 1.0))
+#define PI           (3.14159265359)
+
+/* 问题相关 */
+#define X_DIM       10
+#define gsonum      100           /* 种群大小 */
+
 /* 参数 */
-#define RND         (rand()/RAND_MAX+1.0)
-#define gsonum      1000            /* 种群大小 */
-#define initl       5.0          /* 初始萤光素值 */
-#define rho         0.4            /* 萤光素挥发系数 */
-#define gamma       0.6          /* 适应度影响因子 */
-#define beta        0.08          /* 邻域变化率 */
-#define s           0.8              /* 移动步长 */
-#define nt          5                  /* 邻域阀值, 用于自适应决策半径 */
-#define initr       40          /* 初始决策半径 */
-#define rs          65           /* 最大决策半径 */
-#define X_DIM       3          /* 空间维数, 即问题的解得个数 */
-#define maxiter     5000        /* 置迭代次数 */
+const double initl = 5.0;          /* 初始萤光素值 */
+const double rho = 0.4;            /* 萤光素挥发系数 */
+const double alpha = 0.6;          /* 适应度影响因子 */
+const double beta = 0.08;          /* 邻域变化率 */
+const double s = 0.8;              /* 移动步长 */
+const int nt = 5;                  /* 邻域阀值 */
+const double initr = 400;          /* 初始决策半径 */
+const double rs = 650;             /* 最大决策半径 */
 
 
 
